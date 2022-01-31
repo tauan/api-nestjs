@@ -94,6 +94,69 @@ export class NivelService extends BaseService<Nivel> {
     return this.repository.softDelete(+id);
   }
 
+  count(params?: FindAllParams): Promise<number> {
+    const {
+      showDeleted,
+      relations,
+      pageSize,
+      offset,
+      pageNumber,
+      sortField,
+      sortOrder,
+      query,
+    } = params;
+
+    delete params?.showDeleted;
+    delete params?.query;
+    delete params?.relations;
+    delete params?.pageSize;
+    delete params?.pageNumber;
+    delete params?.offset;
+    delete params?.sortField;
+    delete params?.sortOrder;
+    delete params?.select;
+
+    const options: FindManyOptions = {
+      where: params,
+    };
+
+    if (showDeleted) {
+      options.withDeleted = showDeleted;
+    }
+
+    if (relations) {
+      options.relations = JSON.parse(relations);
+    }
+
+    if (pageSize && offset >= 0) {
+      options.take = +pageSize;
+      options.skip = +offset;
+    }
+
+    if (pageSize && pageNumber) {
+      options.take = +pageSize;
+      options.skip = (+pageNumber - 1) * +pageSize;
+    }
+
+    if (sortField && sortOrder) {
+      options.order = {
+        [sortField]: sortOrder,
+      };
+    } else {
+      options.order = {
+        id: 'DESC',
+      };
+    }
+
+    if (query) {
+      options.where = {
+        nivel: Like(`%${query}%`),
+      };
+    }
+
+    return this.repository.count(options);
+  }
+
   findOne(id: number, params?): Promise<Nivel> {
     return this.repository.findOne(id, { relations: ['desenvolvedores'] });
   }
